@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'elevatorapp',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -70,7 +71,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'elevator.wsgi.application'
 
-
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient"
+        },
+        "KEY_PREFIX": "example"
+    }
+}
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 

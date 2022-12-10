@@ -19,5 +19,5 @@ from elevatorapp import urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path("hit", include(urls)),
+    path("", include(urls)),
 ]
