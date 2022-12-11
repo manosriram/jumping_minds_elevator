@@ -14,18 +14,18 @@ class Elevator:
             id: {}
             current_floor: {}
             door: {}
-            status: {}
+            condition: {}
             request_list: {}
             direction: {}
         '''
 
-        return pattern.format(self.id, self.current_floor, self.door, self.status, self.request_list, self.direction)
+        return pattern.format(self.id, self.current_floor, self.door, self.condition, self.request_list, self.direction)
 
     def __init__(self, id):
         self.id = id
         self.current_floor = 0
         self.door = ElevatorDoorStatus.OPEN
-        self.status = ElevatorCondition.WORKING
+        self.condition = ElevatorCondition.WORKING
         self.request_list = []
         self.direction = 0
 

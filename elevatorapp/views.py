@@ -2,8 +2,9 @@ from django.shortcuts import render
 import json
 
 from django.core.cache import cache
+import pickle
 
-from .elevator import Elevator
+from .elevator import Elevator, ElevatorCondition, ElevatorDoorStatus
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -14,12 +15,14 @@ elevators = {}
 class ElevatorSystem(APIView):
 
     def get(self, request):
+        elevatorx = pickle.loads(cache.get("elevators"))
+
         elevator_id = request.GET.get('id', None)
         show_all = request.GET.get('all', None)
         if show_all is not None and int(show_all) is 1:
             elevators_json = []
             for x in elevators.keys():
-                elevators_json.append(vars(elevators[x]))
+                elevators_json.append(vars(elevatorx[x]))
 
             return Response(elevators_json)
 
@@ -33,17 +36,20 @@ class ElevatorSystem(APIView):
             for i in range(0, elevators_count):
                 elevators[i+1] = Elevator(i+1)
 
+        cache.set("elevators", pickle.dumps(elevators))
+
         return Response("intialized {} elevators".format(elevators_count))
 
     def put(self, request):
         door = request.data.get('door', None)
-        if door == "closed":
+        if door == ElevatorDoorStatus.CLOSED:
             elevator_id = request.data['id']
             elevator = elevators.get(int(elevator_id))
             elevator.process_request_list()
 
-            return Response("door status changed to closed")
+            cache.set("elevators", pickle.dumps(elevators))
 
+            return Response("door status changed to closed")
 
 
         floor = request.data.get('floor', None)
@@ -51,6 +57,8 @@ class ElevatorSystem(APIView):
             mn = 1000
             for idx, e in enumerate(elevators.keys()):
                 x = elevators[e]
+                if x.condition != ElevatorCondition.WORKING:
+                    continue
                 if abs(x.current_floor - floor) < mn:
                     mn = x.current_floor
                     mn_idx = x.id
@@ -59,9 +67,27 @@ class ElevatorSystem(APIView):
             elevator = elevators.get(mn_idx, None)
             elevator.add_floor_to_request_list(floor)
 
+            cache.set("elevators", pickle.dumps(elevators))
+        
+        condition = request.data.get('condition', None)
+        if condition is None:
+            return Response({
+                "id": elevator.id,
+                "request_list": elevator.request_list
+            })
 
-            
+        if condition not in [ElevatorCondition.WORKING, ElevatorCondition.UNDER_MAINTENANCE]:
+            return Response({ "message": "condition should be either working or under_maintenance" })
+
+        elevator_id = request.data['id']
+        elevator = elevators.get(int(elevator_id))
+        elevator.condition = condition
+
+        cache.set("elevators", pickle.dumps(elevators))
+
         return Response({
             "id": elevator.id,
-            "request_list": elevator.request_list
+            "condition": elevator.condition
         })
+
+
