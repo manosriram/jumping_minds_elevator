@@ -1,3 +1,13 @@
+from enum import Enum
+
+class ElevatorDoorStatus(str, Enum):
+    OPEN = "open"
+    CLOSED = "closed"
+
+class ElevatorCondition(str, Enum):
+    WORKING = "working"
+    UNDER_MAINTENANCE = "under_maintenance"
+
 class Elevator:
     def __str__(self):
         pattern = '''
@@ -14,8 +24,8 @@ class Elevator:
     def __init__(self, id):
         self.id = id
         self.current_floor = 0
-        self.door = "open"
-        self.status = "working"
+        self.door = ElevatorDoorStatus.OPEN
+        self.status = ElevatorCondition.WORKING
         self.request_list = []
         self.direction = 0
 
@@ -33,13 +43,13 @@ class Elevator:
 
     def open_door(self):
         print("opening door for elevator {} at floor {}".format(self.id, self.current_floor))
-        self.door = "open"
+        self.door = ElevatorDoorStatus.OPEN
         self.update_direction()
 
 
     def close_door(self):
         print("closing door for elevator {} at floor {}".format(self.id, self.current_floor))
-        self.door = "closed"
+        self.door = ElevatorDoorStatus.CLOSED
 
     def add_floor_to_request_list(self, floor):
         self.request_list.append(int(floor))

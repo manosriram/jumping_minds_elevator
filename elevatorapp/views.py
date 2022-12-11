@@ -1,5 +1,4 @@
 from django.shortcuts import render
-from enum import Enum
 import json
 
 from django.core.cache import cache
