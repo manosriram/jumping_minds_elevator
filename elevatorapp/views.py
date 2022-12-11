@@ -12,22 +12,45 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 
 elevators = {}
+
+class ElevatorMeta(viewsets.ViewSet):
+    @action(methods=['get'], detail=False)    
+    def get_elevator_next_destination(self, request):
+        elevator_id = request.GET.get('id', None)
+        elevator = elevators.get(int(elevator_id))
+        
+        if len(elevator.request_list) == 0:
+            return Response({ "message": "request list empty" })
+        else:
+            return Response({ "floor": elevator.request_list[0] })
+
+    @action(methods=['get'], detail=False)    
+    def get_elevator_direction(self, request):
+        elevator_id = request.GET.get('id', None)
+        elevator = elevators.get(int(elevator_id))
+
+        if len(elevator.request_list) == 0:
+            return Response({ "message": "request list empty" })
+        else:
+            direction = "up" if elevator.direction == 1 else "down"
+            return Response({ "direction": direction })
+
+
 class ElevatorSystem(APIView):
 
     def get(self, request):
         elevatorx = pickle.loads(cache.get("elevators"))
 
         elevator_id = request.GET.get('id', None)
-        show_all = request.GET.get('all', None)
-        if show_all is not None and int(show_all) is 1:
-            elevators_json = []
-            for x in elevators.keys():
-                elevators_json.append(vars(elevatorx[x]))
+        if elevator_id is not None:
+            elevator = elevators.get(int(elevator_id), None)
+            return Response(vars(elevator))
 
-            return Response(elevators_json)
+        elevators_json = []
+        for x in elevators.keys():
+            elevators_json.append(vars(elevatorx[x]))
 
-        elevator = elevators.get(int(elevator_id), None)
-        return Response(vars(elevator))
+        return Response(elevators_json)
 
     def post(self, request):
         elevators_count = request.data['elevators_count']
@@ -54,17 +77,17 @@ class ElevatorSystem(APIView):
 
         floor = request.data.get('floor', None)
         if floor is not None:
-            mn = 1000
+            min_diff = 1000
+            elevator_index = len(elevators)
+
             for idx, e in enumerate(elevators.keys()):
                 x = elevators[e]
-                if x.condition != ElevatorCondition.WORKING:
-                    continue
-                if abs(x.current_floor - floor) < mn:
-                    mn = x.current_floor
-                    mn_idx = x.id
+                if abs(x.current_floor - floor) < min_diff:
+                    min_diff = abs(x.current_floor - floor)
+                    elevator_index = e
+                    elevator = x
 
-            # find optimal elevator
-            elevator = elevators.get(mn_idx, None)
+            elevator = elevators.get(elevator_index, None)
             elevator.add_floor_to_request_list(floor)
 
             cache.set("elevators", pickle.dumps(elevators))

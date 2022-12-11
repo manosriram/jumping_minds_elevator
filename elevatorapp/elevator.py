@@ -58,21 +58,19 @@ class Elevator:
     def go_to_floor(self, floor):
         self.close_door()
 
-        # go from self.current_floor to floor
         if floor < self.current_floor:
             self.direction = -1
-            for x in range(self.current_floor-1, floor, -1):
+            for x in range(self.current_floor, floor-1, -1):
                 self.current_floor = x
                 print("elevator {} via floor {}".format(self.id, self.current_floor))
         elif floor > self.current_floor:
             self.direction = 1
-            for x in range(self.current_floor+1, floor):
+            for x in range(self.current_floor, floor+1):
                 self.current_floor = x
                 print("elevator {} via floor {}".format(self.id, self.current_floor))
         else:
             self.direction = 0
 
-        self.current_floor += 1
         self.open_door()
 
         self.update_direction()
