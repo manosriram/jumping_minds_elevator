@@ -14,16 +14,16 @@
 2. Request elevator for floor (assigns optimal elevator and updates it's request_list)
 3. Close elevator's door
 
-One assumption I've made is elevator doesn't move until we close the door. This allows us to use the APIs and see the live states. So, we need to call the close elevator API inorder to update the
+One assumption I've made is elevator doesn't move until we close the door. This allows us to use the APIs and see the live states. So, we need to call the close elevator API (`/elevator/door`) inorder to update the
 request_list.
 
 4. Get all elevators or by id to see current state of the elevator.
 
 ### Elevator States
 
-1. condition -> working or under_maintenance, elevator isn't considered if it's condition is under_maintenance
-2. direction -> 1 = up, -1 = down, 0 = request_list is empty
-3. door -> open, closed
+1. condition -> `working` or `under_maintenance`, elevator isn't considered if it's condition is `under_maintenance`
+2. direction -> `1 = up`, `-1 = down`, `0 = request_list is empty`
+3. door -> `open`, `closed`
 4. current_floor -> the floor where elevator is at
 5. request_list -> list of requests
 
