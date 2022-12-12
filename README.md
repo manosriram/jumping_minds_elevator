@@ -14,8 +14,7 @@
 2. Request elevator for floor (assigns optimal elevator and updates it's request_list)
 3. Close elevator's door
 
-One assumption I've made is elevator doesn't move until we close the door. This allows us to use the APIs and see the live states. So, we need to call the close elevator API (`/elevator/door`) inorder to update the
-request_list.
+One assumption I've made is elevator doesn't move until we close the door. This allows us to use the APIs and see the live states. So, we need to call the close elevator API (`/elevator/door`) inorder to update the `request_list` and the `current_floor` of the elevator.
 
 4. Get all elevators or by id to see current state of the elevator.
 
