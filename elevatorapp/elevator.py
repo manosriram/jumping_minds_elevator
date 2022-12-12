@@ -29,6 +29,8 @@ class Elevator:
         self.request_list = []
         self.direction = 0
 
+    # updates the direction of the elevator
+    # 1 = up, -1 = down, 0 = elevator's request list empty
     def update_direction(self):
         request_list = self.request_list
         if len(request_list) > 0:
@@ -46,7 +48,6 @@ class Elevator:
         self.door = ElevatorDoorStatus.OPEN
         self.update_direction()
 
-
     def close_door(self):
         print("closing door for elevator {} at floor {}".format(self.id, self.current_floor))
         self.door = ElevatorDoorStatus.CLOSED
@@ -55,6 +56,7 @@ class Elevator:
         self.request_list.append(int(floor))
         self.update_direction()
 
+    # go to given floor from it's current floor
     def go_to_floor(self, floor):
         self.close_door()
 
@@ -72,9 +74,9 @@ class Elevator:
             self.direction = 0
 
         self.open_door()
-
         self.update_direction()
 
+    # process the next floor in request_list
     def process_request_list(self):
         if len(self.request_list) == 0:
             return

@@ -14,6 +14,7 @@ from rest_framework.decorators import action
 elevators = {}
 
 class ElevatorMeta(viewsets.ViewSet):
+
     @action(methods=['get'], detail=False)    
     def get_elevator_next_destination(self, request):
         elevator_id = request.GET.get('id', None)
