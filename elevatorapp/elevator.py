@@ -9,6 +9,8 @@ class ElevatorCondition(str, Enum):
     UNDER_MAINTENANCE = "under_maintenance"
 
 class Elevator:
+    max_floor = 10
+    min_floor = -10
     def __str__(self):
         pattern = '''
             id: {}
@@ -28,6 +30,9 @@ class Elevator:
         self.condition = ElevatorCondition.WORKING
         self.request_list = []
         self.direction = 0
+
+    def check_valid_floor(self, floor):
+        return floor <= self.max_floor and floor >= self.min_floor
 
     # updates the direction of the elevator
     # 1 = up, -1 = down, 0 = elevator's request list empty
@@ -78,7 +83,7 @@ class Elevator:
 
     # process the next floor in request_list
     def process_request_list(self):
-        if len(self.request_list) == 0:
+        if self.condition != ElevatorCondition.WORKING or len(self.request_list) == 0:
             return
 
         next_floor = self.request_list.pop(0)

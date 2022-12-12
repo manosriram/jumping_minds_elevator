@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework import status
 
 elevators = {}
 
@@ -19,32 +20,41 @@ class ElevatorMeta(viewsets.ViewSet):
     def get_elevator_next_destination(self, request):
         elevator_id = request.GET.get('id', None)
         elevator = elevators.get(int(elevator_id))
+
+        if not elevator:
+            return Response(status=status.HTTP_404_NOT_FOUND, data={ "message": "elevator not found" })
         
         if len(elevator.request_list) == 0:
-            return Response({ "message": "request list empty" })
+            return Response(status=status.HTTP_200_OK, data = { "message": "request list empty" })
         else:
-            return Response({ "floor": elevator.request_list[0] })
+            return Response(status=status.HTTP_200_OK, data = { "floor": elevator.request_list[0] })
 
     @action(methods=['get'], detail=False)    
     def get_elevator_direction(self, request):
         elevator_id = request.GET.get('id', None)
         elevator = elevators.get(int(elevator_id))
 
+        if not elevator:
+            return Response(status=status.HTTP_404_NOT_FOUND, data = { "message": "elevator not found" })
+
         if len(elevator.request_list) == 0:
             return Response({ "message": "request list empty" })
         else:
             direction = "up" if elevator.direction == 1 else "down"
-            return Response({ "direction": direction })
+            return Response(status=status.HTTP_200_OK, data = { "direction": direction })
 
 
-class ElevatorSystem(APIView):
+class ElevatorSystem(viewsets.ViewSet):
 
-    def get(self, request):
+    @action(methods=['get'], detail=False)    
+    def get_elevator(self, request):
         elevatorx = pickle.loads(cache.get("elevators"))
 
         elevator_id = request.GET.get('id', None)
         if elevator_id is not None:
             elevator = elevators.get(int(elevator_id), None)
+            if not elevator:
+                return Response(status=status.HTTP_404_NOT_FOUND, data = { "message": "elevator not found" })
             return Response(vars(elevator))
 
         elevators_json = []
@@ -53,7 +63,8 @@ class ElevatorSystem(APIView):
 
         return Response(elevators_json)
 
-    def post(self, request):
+    @action(methods=['post'], detail=False)    
+    def initialize_elevators(self, request):
         elevators_count = request.data['elevators_count']
 
         if elevators_count:
@@ -62,46 +73,67 @@ class ElevatorSystem(APIView):
 
         cache.set("elevators", pickle.dumps(elevators))
 
-        return Response("intialized {} elevators".format(elevators_count))
+        return Response(status=status.HTTP_200_OK, data = {"message": "intialized {} elevators".format(elevators_count)} )
 
-    def put(self, request):
+
+    @action(methods=['put'], detail=False)    
+    def update_door_status(self, request):
         door = request.data.get('door', None)
         if door == ElevatorDoorStatus.CLOSED:
             elevator_id = request.data['id']
             elevator = elevators.get(int(elevator_id))
+            if not elevator:
+                return Response(status=status.HTTP_404_NOT_FOUND, data = { "message": "elevator not found" })
+
             elevator.process_request_list()
 
             cache.set("elevators", pickle.dumps(elevators))
 
-            return Response("door status changed to closed")
+            return Response(status=status.HTTP_200_OK, data = {"message": "door status changed to closed" })
 
-
+    @action(methods=['put'], detail=False)    
+    def request_elevator(self, request):
         floor = request.data.get('floor', None)
-        if floor is not None:
-            min_diff = 1000
-            elevator_index = len(elevators)
+        min_diff = 1000
+        elevator_index = len(elevators)
 
-            for idx, e in enumerate(elevators.keys()):
-                x = elevators[e]
-                if abs(x.current_floor - floor) < min_diff:
-                    min_diff = abs(x.current_floor - floor)
-                    elevator_index = e
-                    elevator = x
+        for idx, e in enumerate(elevators.keys()):
+            x = elevators[e]
+            if x.condition != ElevatorCondition.WORKING:
+                continue
+            if abs(x.current_floor - floor) < min_diff:
+                min_diff = abs(x.current_floor - floor)
+                elevator_index = e
+                elevator = x
 
-            elevator = elevators.get(elevator_index, None)
-            elevator.add_floor_to_request_list(floor)
-
-            cache.set("elevators", pickle.dumps(elevators))
-        
-        condition = request.data.get('condition', None)
-        if condition is None:
-            return Response({
-                "id": elevator.id,
-                "request_list": elevator.request_list
+        elevator = elevators.get(elevator_index, None)
+        if not elevator:
+            return Response(status=status.HTTP_200_OK, data={
+                "message": "all elevators under_maintenance"
             })
 
+        if not elevator.check_valid_floor(floor):
+            return Response(status=status.HTTP_400_BAD_REQUEST, data={"message": "not a valid floor"})
+
+        elevator.add_floor_to_request_list(floor)
+
+        cache.set("elevators", pickle.dumps(elevators))
+        return Response(status=status.HTTP_200_OK, data={
+            "id": elevator.id,
+            "condition": elevator.condition
+        })
+
+    @action(methods=['put'], detail=False)    
+    def update_condition(self, request):
+        condition = request.data.get('condition', None)
+        if condition is None:
+            return Response(status=status.HTTP_400_BAD_REQUEST, data={
+                "message": "condition empty"
+            })
+
+
         if condition not in [ElevatorCondition.WORKING, ElevatorCondition.UNDER_MAINTENANCE]:
-            return Response({ "message": "condition should be either working or under_maintenance" })
+            return Response(status=status.HTTP_400_BAD_REQUEST, data={ "message": "condition should be either working or under_maintenance" })
 
         elevator_id = request.data['id']
         elevator = elevators.get(int(elevator_id))
@@ -109,9 +141,7 @@ class ElevatorSystem(APIView):
 
         cache.set("elevators", pickle.dumps(elevators))
 
-        return Response({
+        return Response(status=status.HTTP_200_OK, data={
             "id": elevator.id,
             "condition": elevator.condition
         })
-
-
