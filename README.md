@@ -88,3 +88,11 @@ Run `docker-compose up` to start the server at port 8000.
     "condition": "under_maintenance"
 }
 ```
+
+7. Get next floor for an elevator
+
+`elevator/next/?id=1`
+
+8. Get direction of elevator
+
+`elevator/direction/?id=1`
