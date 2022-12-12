@@ -34,7 +34,7 @@ Elevator is assigned by calculating the distance from the requested floor to all
 
 ### Setup
 
-Run `docker-compose up` to start the server at port 8000.
+Run `docker-compose up` to start the server at port ```8000```.
 
 ### API definitions
 
